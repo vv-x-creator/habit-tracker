@@ -556,6 +556,136 @@
       border: 1px solid rgba(255,255,255,0.08);
       flex-shrink: 0;
     }
+
+    /* ============================================================
+       LIGHT THEME
+       Override dark variables when data-theme="light" is on <html>.
+    ============================================================ */
+    [data-theme="light"] {
+      --bg:          #f2f2f7;
+      --surface:     #ffffff;
+      --surface2:    #e5e5ed;
+      --border:      #d0d0dc;
+      --accent:      #6b5ce7;
+      --accent-dim:  #cbc8f5;
+      --green:       #2eb87a;
+      --green-dim:   #c8f0df;
+      --red:         #e85555;
+      --text:        #1a1a2e;
+      --text-muted:  #6b6b80;
+    }
+
+    [data-theme="light"] .habit-card.done {
+      background: #edf8f3;
+      border-color: var(--green-dim);
+    }
+
+    /* ============================================================
+       THEME TOGGLE BUTTON (in header)
+    ============================================================ */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .btn-theme {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .btn-theme:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    /* ============================================================
+       STATS PANEL
+    ============================================================ */
+    .stats-section {
+      margin-top: 36px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    .stat-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ============================================================
+       EXPORT / IMPORT BUTTONS
+    ============================================================ */
+    .data-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 32px;
+      justify-content: center;
+    }
+
+    .btn-data {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.83rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s, color 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-data:hover {
+      background: var(--border);
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -570,6 +700,10 @@
       <p>Build streaks. Stay consistent.</p>
       <!-- JavaScript will fill in today's date here -->
       <span class="date-badge" id="date-display"></span>
+      <!-- Light / dark mode toggle -->
+      <div class="header-controls">
+        <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+      </div>
     </header>
 
     <!-- ======================================================
@@ -615,6 +749,15 @@
     <div class="empty-state" id="empty-state" style="display:none">
       <div class="empty-icon">+</div>
       <p>No habits yet.<br/>Add one above to get started!</p>
+    </div>
+
+    <!-- ======================================================
+         STATS PANEL
+         Shows aggregate stats across all habits.
+    ====================================================== -->
+    <div class="stats-section" id="stats-section" style="display:none">
+      <p class="section-label">All-time stats</p>
+      <div class="stats-grid" id="stats-grid"></div>
     </div>
 
     <!-- ======================================================
@@ -668,6 +811,32 @@
           <span class="legend-dot"></span>No data
         </span>
       </div>
+    </div>
+
+    <!-- ======================================================
+         DATA CONTROLS — Export and Import backups
+    ====================================================== -->
+    <div class="data-controls">
+      <button class="btn-data" onclick="exportData()" title="Download your habits as a JSON backup file">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export
+      </button>
+      <!-- label wraps the hidden file input so clicking the styled button triggers the picker -->
+      <label class="btn-data" title="Restore habits from a JSON backup file">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Import
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+      </label>
     </div>
 
   </div>
@@ -985,8 +1154,9 @@
         list.appendChild(card);
       });
 
-      // Redraw the calendar so it reflects any changes (e.g. toggling a habit)
+      // Redraw the calendar and stats so they reflect any changes
       renderCalendar();
+      renderStats();
     }
 
     // =============================================================
@@ -1085,12 +1255,20 @@
         cell.className = cls;
 
         // Color: interpolate hue from 0° (red) to 140° (green)
-        // Only applied to past/today days with actual data
+        // Only applied to past/today days with actual data.
+        // Lightness values differ between dark and light themes.
         if (!isFuture && pct !== null) {
-          const hue = Math.round(pct * 1.4); // 0 → 0, 100 → 140
-          cell.style.background   = `hsl(${hue}, 60%, 18%)`;
-          cell.style.borderColor  = `hsl(${hue}, 60%, 28%)`;
-          cell.style.color        = `hsl(${hue}, 80%, 80%)`;
+          const hue     = Math.round(pct * 1.4); // 0 → 0, 100 → 140
+          const isLight = document.documentElement.getAttribute("data-theme") === "light";
+          if (isLight) {
+            cell.style.background  = `hsl(${hue}, 55%, 85%)`;
+            cell.style.borderColor = `hsl(${hue}, 45%, 70%)`;
+            cell.style.color       = `hsl(${hue}, 60%, 25%)`;
+          } else {
+            cell.style.background  = `hsl(${hue}, 60%, 18%)`;
+            cell.style.borderColor = `hsl(${hue}, 60%, 28%)`;
+            cell.style.color       = `hsl(${hue}, 80%, 80%)`;
+          }
         }
 
         // Tooltip on hover: shows full detail (e.g. "3/5 habits — 60%")
@@ -1210,6 +1388,180 @@
     }
 
     // =============================================================
+    // THEME TOGGLE — light / dark mode
+    // =============================================================
+    const THEME_KEY = "habit-tracker-theme";
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isLight = html.getAttribute("data-theme") === "light";
+      const next = isLight ? "dark" : "light";
+      html.setAttribute("data-theme", next);
+      localStorage.setItem(THEME_KEY, next);
+      document.getElementById("btn-theme").textContent = next === "light" ? "🌙" : "☀️";
+      // Re-render calendar so heatmap colours adapt to the new theme
+      renderCalendar();
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY) || "dark";
+      document.documentElement.setAttribute("data-theme", saved);
+      const btn = document.getElementById("btn-theme");
+      if (btn) btn.textContent = saved === "light" ? "🌙" : "☀️";
+    }
+
+    // =============================================================
+    // STATS PANEL
+    // Calculates and renders four aggregate stats cards.
+    // =============================================================
+
+    // Find the all-time longest streak (not just the current one).
+    function calcBestStreak(completions) {
+      if (!completions || completions.length === 0) return 0;
+      const sorted = [...completions].sort(); // ascending
+      let best = 1, run = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1]);
+        const curr = new Date(sorted[i]);
+        const diff = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          run++;
+          if (run > best) best = run;
+        } else {
+          run = 1;
+        }
+      }
+      return best;
+    }
+
+    function renderStats() {
+      const habits  = loadHabits();
+      const section = document.getElementById("stats-section");
+      const grid    = document.getElementById("stats-grid");
+
+      if (habits.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+      section.style.display = "block";
+
+      // 1. Total completions across all habits
+      const totalCompletions = habits.reduce((sum, h) => sum + h.completions.length, 0);
+
+      // 2. All-time best streak (across all habits)
+      const bestStreak = habits.reduce(
+        (best, h) => Math.max(best, calcBestStreak(h.completions)), 0
+      );
+
+      // 3. 7-day completion rate
+      const today = new Date();
+      let totalPossible = 0, totalDone = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const active = habits.filter(h => h.createdAt <= ds);
+        if (active.length > 0) {
+          totalPossible += active.length;
+          totalDone     += active.filter(h => h.completions.includes(ds)).length;
+        }
+      }
+      const rate7 = totalPossible > 0 ? Math.round(totalDone / totalPossible * 100) : 0;
+
+      // 4. Most consistent habit (most total completions)
+      const topHabit = [...habits].sort((a, b) => b.completions.length - a.completions.length)[0];
+
+      grid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${totalCompletions}</div>
+          <div class="stat-label">Total completions</div>
+          <div class="stat-sub">All time, all habits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${bestStreak}</div>
+          <div class="stat-label">Best streak ever</div>
+          <div class="stat-sub">${bestStreak > 0 ? bestStreak + " days in a row" : "Keep going!"}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${rate7}%</div>
+          <div class="stat-label">7-day rate</div>
+          <div class="stat-sub">Avg completion, last 7 days</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${topHabit ? topHabit.completions.length : 0}</div>
+          <div class="stat-label">Most consistent</div>
+          <div class="stat-sub">${topHabit ? escapeHTML(topHabit.name) : "—"}</div>
+        </div>
+      `;
+    }
+
+    // =============================================================
+    // EXPORT DATA
+    // Downloads the entire habits array as a .json backup file.
+    // =============================================================
+    function exportData() {
+      const habits = loadHabits();
+      if (habits.length === 0) {
+        showToast("No habits to export.");
+        return;
+      }
+      const json = JSON.stringify(habits, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      a.href     = url;
+      a.download = `habit-tracker-backup-${date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Exported!");
+    }
+
+    // =============================================================
+    // IMPORT DATA
+    // Reads a .json backup file and merges habits by ID,
+    // so existing habits aren't overwritten.
+    // =============================================================
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error("Top-level must be an array.");
+
+          // Basic structure validation
+          for (const h of imported) {
+            if (typeof h.id !== "string" || typeof h.name !== "string" || !Array.isArray(h.completions)) {
+              throw new Error("Invalid habit structure.");
+            }
+          }
+
+          // Merge: add habits whose IDs don't exist yet
+          const existing    = loadHabits();
+          const existingIds = new Set(existing.map(h => h.id));
+          let added = 0;
+          for (const h of imported) {
+            if (!existingIds.has(h.id)) {
+              existing.push(h);
+              added++;
+            }
+          }
+          saveHabits(existing);
+          render();
+          showToast(`Imported ${added} new habit${added !== 1 ? "s" : ""}!`);
+        } catch {
+          showToast("Invalid file — import failed.");
+        }
+      };
+      reader.readAsText(file);
+      // Reset so the same file can be re-imported if needed
+      event.target.value = "";
+    }
+
+    // =============================================================
     // ESCAPE HTML
     // This prevents XSS: if someone types "<script>" as a habit
     // name, it won't be executed as code.
@@ -1261,8 +1613,9 @@
     // STARTUP
     // Run these when the page first loads.
     // =============================================================
+    initTheme();   // apply saved light/dark preference before first paint
     setDateDisplay();
-    render(); // render() now calls renderCalendar() internally, so the calendar draws on load too
+    render(); // render() calls renderCalendar() and renderStats() internally
   </script>
 
 </body>
