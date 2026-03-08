@@ -556,6 +556,120 @@
       border: 1px solid rgba(255,255,255,0.08);
       flex-shrink: 0;
     }
+
+    /* ============================================================
+       STATISTICS SECTION
+    ============================================================ */
+    .stats-section {
+      margin-top: 40px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .stat-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stats-summary {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .summary-pill {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .summary-pill-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .summary-pill-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ============================================================
+       DATA ACTIONS (Export / Import)
+    ============================================================ */
+    .data-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: -4px;
+      margin-bottom: 28px;
+    }
+
+    .btn-data {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 7px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-data:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -618,6 +732,30 @@
     </div>
 
     <!-- ======================================================
+         DATA ACTIONS — Export & Import
+    ====================================================== -->
+    <div class="data-actions">
+      <button class="btn-data" onclick="exportData()" title="Download your habits as a JSON file">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export
+      </button>
+      <button class="btn-data" onclick="triggerImport()" title="Restore habits from a JSON backup">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Import
+      </button>
+    </div>
+
+    <!-- ======================================================
          CALENDAR
          Shows each day of the current (or past) month as a
          colored cell: green = high completion, red = low.
@@ -670,10 +808,23 @@
       </div>
     </div>
 
+    <!-- ======================================================
+         STATISTICS SECTION
+    ====================================================== -->
+    <div class="stats-section" id="stats-section">
+      <p class="section-label">Statistics</p>
+      <!-- Overall summary pills -->
+      <div class="stats-summary" id="stats-summary"></div>
+      <!-- Per-habit stat cards -->
+      <div class="stats-grid" id="stats-grid"></div>
+    </div>
+
   </div>
 
   <!-- Toast notification (lives outside the scrollable column) -->
   <div class="toast" id="toast"></div>
+  <!-- Hidden file input for importing data -->
+  <input type="file" id="import-file" accept=".json" style="display:none" />
 
   <script>
     // =============================================================
@@ -772,6 +923,46 @@
         }
       }
       return streak;
+    }
+
+    // =============================================================
+    // BEST STREAK EVER
+    //
+    // Unlike calcStreak (which only counts if streak reaches today/
+    // yesterday), this walks all completions and finds the longest
+    // consecutive run at any point in history.
+    // =============================================================
+    function bestStreak(completions) {
+      if (!completions || completions.length === 0) return 0;
+      const sorted = [...completions].sort();
+      let best = 1, current = 1;
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1]);
+        const curr = new Date(sorted[i]);
+        const diff = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          current++;
+          if (current > best) best = current;
+        } else if (diff > 1) {
+          current = 1;
+        }
+        // diff === 0 means duplicate date — skip without resetting
+      }
+      return best;
+    }
+
+    // =============================================================
+    // ALL-TIME COMPLETION RATE
+    //
+    // Percentage of days (since the habit was created up to today)
+    // on which the habit was completed.
+    // =============================================================
+    function completionRate(habit) {
+      const created = new Date(habit.createdAt);
+      const today   = new Date(todayStr());
+      const totalDays = Math.floor((today - created) / (1000 * 60 * 60 * 24)) + 1;
+      if (totalDays <= 0) return 100;
+      return Math.min(100, Math.round((habit.completions.length / totalDays) * 100));
     }
 
     // =============================================================
@@ -985,8 +1176,9 @@
         list.appendChild(card);
       });
 
-      // Redraw the calendar so it reflects any changes (e.g. toggling a habit)
+      // Redraw the calendar and stats so they reflect any changes
       renderCalendar();
+      renderStats();
     }
 
     // =============================================================
@@ -1110,6 +1302,146 @@
         grid.appendChild(cell);
       }
     }
+
+    // =============================================================
+    // STATISTICS — RENDER
+    //
+    // Draws the overall summary pills and per-habit stat cards.
+    // =============================================================
+    function renderStats() {
+      const habits  = loadHabits();
+      const summary = document.getElementById("stats-summary");
+      const grid    = document.getElementById("stats-grid");
+
+      if (habits.length === 0) {
+        summary.innerHTML = "";
+        grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.86rem;text-align:center;padding:20px 0">Add habits to see your statistics.</p>';
+        return;
+      }
+
+      // --- Overall summary pills ---
+      const totalCompletions = habits.reduce((sum, h) => sum + h.completions.length, 0);
+
+      // Longest current streak across all habits
+      const topStreak = habits.reduce((max, h) => Math.max(max, calcStreak(h.completions)), 0);
+
+      // Average completion rate across all habits
+      const avgRate = Math.round(
+        habits.reduce((sum, h) => sum + completionRate(h), 0) / habits.length
+      );
+
+      summary.innerHTML = `
+        <div class="summary-pill">
+          <div class="summary-pill-val">${habits.length}</div>
+          <div class="summary-pill-label">Total habits</div>
+        </div>
+        <div class="summary-pill">
+          <div class="summary-pill-val">${totalCompletions}</div>
+          <div class="summary-pill-label">All completions</div>
+        </div>
+        <div class="summary-pill">
+          <div class="summary-pill-val">${topStreak > 0 ? topStreak : "—"}</div>
+          <div class="summary-pill-label">Best active streak</div>
+        </div>
+        <div class="summary-pill">
+          <div class="summary-pill-val">${avgRate}%</div>
+          <div class="summary-pill-label">Avg completion</div>
+        </div>
+      `;
+
+      // --- Per-habit cards ---
+      grid.innerHTML = "";
+      habits.forEach(habit => {
+        const streak = calcStreak(habit.completions);
+        const best   = bestStreak(habit.completions);
+        const total  = habit.completions.length;
+        const rate   = completionRate(habit);
+
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        card.innerHTML = `
+          <div class="stat-name" title="${escapeHTML(habit.name)}">${escapeHTML(habit.name)}</div>
+          <div class="stat-row">
+            <span>Total completions</span>
+            <span class="stat-val">${total}</span>
+          </div>
+          <div class="stat-row">
+            <span>Current streak</span>
+            <span class="stat-val">${streak > 0 ? "&#128293; " + streak + "d" : "—"}</span>
+          </div>
+          <div class="stat-row">
+            <span>Best streak ever</span>
+            <span class="stat-val">${best > 0 ? "&#127942; " + best + "d" : "—"}</span>
+          </div>
+          <div class="stat-row">
+            <span>All-time rate</span>
+            <span class="stat-val">${rate}%</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // =============================================================
+    // EXPORT DATA
+    //
+    // Serialises all habit data to a JSON file and triggers a
+    // browser download.
+    // =============================================================
+    function exportData() {
+      const habits = loadHabits();
+      if (habits.length === 0) {
+        showToast("Nothing to export yet.");
+        return;
+      }
+      const payload = JSON.stringify(habits, null, 2);
+      const blob    = new Blob([payload], { type: "application/json" });
+      const url     = URL.createObjectURL(blob);
+      const a       = document.createElement("a");
+      a.href        = url;
+      a.download    = `habits-backup-${todayStr()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Data exported!");
+    }
+
+    // =============================================================
+    // IMPORT DATA
+    //
+    // Opens the hidden file picker; actual import is handled by the
+    // change listener below.
+    // =============================================================
+    function triggerImport() {
+      document.getElementById("import-file").click();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("import-file").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (!Array.isArray(data)) throw new Error("Root must be an array.");
+            // Basic structural validation
+            data.forEach(h => {
+              if (typeof h.id !== "string" || typeof h.name !== "string" ||
+                  typeof h.createdAt !== "string" || !Array.isArray(h.completions)) {
+                throw new Error("Invalid habit shape.");
+              }
+            });
+            saveHabits(data);
+            render();
+            showToast(`Imported ${data.length} habit${data.length !== 1 ? "s" : ""}!`);
+          } catch (err) {
+            showToast("Import failed — invalid file.");
+          }
+        };
+        reader.readAsText(file);
+        this.value = ""; // reset so the same file can be re-imported
+      });
+    });
 
     // =============================================================
     // INLINE NAME EDITING
@@ -1262,7 +1594,7 @@
     // Run these when the page first loads.
     // =============================================================
     setDateDisplay();
-    render(); // render() now calls renderCalendar() internally, so the calendar draws on load too
+    render(); // render() calls renderCalendar() and renderStats() internally
   </script>
 
 </body>
