@@ -686,9 +686,166 @@
       background: var(--border);
       color: var(--text);
     }
+
+    /* ============================================================
+       AUTH SCREEN
+       Full-page overlay shown when the user is not signed in.
+    ============================================================ */
+    .auth-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 100;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.3px;
+    }
+
+    .auth-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .auth-input {
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .auth-input:focus { border-color: var(--accent); }
+    .auth-input::placeholder { color: var(--text-muted); }
+
+    .auth-error {
+      background: rgba(247, 106, 106, 0.1);
+      border: 1px solid var(--red);
+      color: var(--red);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.83rem;
+      line-height: 1.4;
+    }
+
+    .auth-info {
+      background: rgba(124, 106, 247, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.83rem;
+      line-height: 1.4;
+    }
+
+    .auth-toggle {
+      text-align: center;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .auth-toggle button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: inherit;
+      font-family: inherit;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    /* User badge (email + sign out) shown in header when logged in */
+    .user-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .user-email {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-signout {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-signout:hover {
+      background: rgba(247, 106, 106, 0.1);
+      color: var(--red);
+      border-color: var(--red);
+    }
   </style>
 </head>
 <body>
+
+  <!-- ============================================================
+       AUTH SCREEN — shown when the user is not signed in.
+       Hidden once a Supabase session is established.
+  ============================================================ -->
+  <div id="auth-screen" class="auth-screen" style="display:none">
+    <div class="auth-card">
+      <h2 class="auth-title">Habit Tracker</h2>
+      <p class="auth-sub">Sign in to sync your habits across all your devices.</p>
+
+      <!-- Error / info messages -->
+      <div id="auth-error" class="auth-error" style="display:none"></div>
+      <div id="auth-info"  class="auth-info"  style="display:none"></div>
+
+      <input type="email"    id="auth-email"    class="auth-input" placeholder="Email"    autocomplete="email" />
+      <input type="password" id="auth-password" class="auth-input" placeholder="Password" autocomplete="current-password" />
+
+      <button class="btn-add" id="auth-btn" onclick="handleAuth()">Sign in</button>
+
+      <p class="auth-toggle">
+        No account?
+        <button onclick="toggleAuthMode()" id="auth-mode-btn">Sign up</button>
+      </p>
+    </div>
+  </div>
 
   <div class="container">
 
@@ -703,6 +860,11 @@
       <!-- Light / dark mode toggle -->
       <div class="header-controls">
         <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+      </div>
+      <!-- Signed-in user's email + sign out (hidden until logged in) -->
+      <div class="user-badge" id="user-badge" style="display:none">
+        <span class="user-email" id="user-email"></span>
+        <button class="btn-signout" onclick="signOut()">Sign out</button>
       </div>
     </header>
 
@@ -844,6 +1006,9 @@
   <!-- Toast notification (lives outside the scrollable column) -->
   <div class="toast" id="toast"></div>
 
+  <!-- Supabase JS SDK (UMD build — exposes global `supabase`) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
   <script>
     // =============================================================
     // DATA MODEL
@@ -861,6 +1026,40 @@
     // }
     // =============================================================
 
+    // =============================================================
+    // SUPABASE CONFIGURATION
+    //
+    // Setup (one-time, ~5 minutes):
+    //   1. Create a free project at https://supabase.com
+    //   2. Open the SQL Editor in your project and run:
+    //
+    //        create table user_habits (
+    //          user_id uuid primary key references auth.users on delete cascade,
+    //          habits  jsonb not null default '[]'
+    //        );
+    //        alter table user_habits enable row level security;
+    //        create policy "own data only" on user_habits
+    //          for all using (auth.uid() = user_id);
+    //
+    //   3. Go to Settings → API and copy your Project URL and anon key below.
+    //
+    // Without these values the app works in localStorage-only mode
+    // (single device, no accounts).
+    // =============================================================
+    const SUPABASE_URL      = "https://YOUR_PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+
+    // Supabase client — null when not yet configured or offline
+    let db = null;
+    try {
+      if (!SUPABASE_URL.includes("YOUR_PROJECT")) {
+        db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) { console.warn("Supabase init failed:", e); }
+
+    // Currently signed-in user (null = not logged in / localStorage mode)
+    let currentUser = null;
+
     const STORAGE_KEY = "habit-tracker-v1";
 
     // =============================================================
@@ -871,15 +1070,52 @@
     let calYear  = new Date().getFullYear();
     let calMonth = new Date().getMonth(); // 0 = January, 11 = December
 
-    // Load habits from localStorage, or start with an empty array.
+    // =============================================================
+    // IN-MEMORY CACHE
+    //
+    // habitsCache is the single source of truth for the UI.
+    // It is always kept in sync with localStorage (instant reads/writes)
+    // and asynchronously synced to Supabase in the background.
+    // =============================================================
+    let habitsCache = [];
+
+    // Returns the current habit list synchronously from memory.
     function loadHabits() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      return habitsCache;
     }
 
-    // Save the current habits array back to localStorage.
+    // Saves to memory + localStorage immediately, then syncs to Supabase.
     function saveHabits(habits) {
+      habitsCache = habits;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+      // Fire-and-forget — UI is never blocked waiting for the network
+      if (db && currentUser) {
+        db.from("user_habits")
+          .upsert({ user_id: currentUser.id, habits })
+          .then(({ error }) => { if (error) console.error("Supabase sync error:", error); });
+      }
+    }
+
+    // Pulls the user's habits from Supabase and updates the cache.
+    // Called once after a successful login.
+    async function syncFromSupabase() {
+      if (!db || !currentUser) return;
+      const { data, error } = await db
+        .from("user_habits")
+        .select("habits")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+      if (error) { console.error("Sync error:", error); return; }
+      if (data?.habits) {
+        // Remote data wins — it's the authoritative source
+        habitsCache = data.habits;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(habitsCache));
+      } else {
+        // First login on this account — carry over any existing local habits
+        const local = localStorage.getItem(STORAGE_KEY);
+        habitsCache = local ? JSON.parse(local) : [];
+        if (habitsCache.length > 0) saveHabits(habitsCache); // push them up
+      }
     }
 
     // =============================================================
@@ -1388,6 +1624,79 @@
     }
 
     // =============================================================
+    // AUTH — sign in, sign up, sign out
+    // =============================================================
+    let authMode = "signin"; // "signin" | "signup"
+
+    function toggleAuthMode() {
+      authMode = authMode === "signin" ? "signup" : "signin";
+      const isSignIn = authMode === "signin";
+      document.getElementById("auth-btn").textContent      = isSignIn ? "Sign in" : "Sign up";
+      document.getElementById("auth-mode-btn").textContent = isSignIn ? "Sign up" : "Sign in";
+      document.querySelector(".auth-toggle").innerHTML = isSignIn
+        ? 'No account? <button onclick="toggleAuthMode()" id="auth-mode-btn">Sign up</button>'
+        : 'Already have an account? <button onclick="toggleAuthMode()" id="auth-mode-btn">Sign in</button>';
+      setAuthMessage("", "");
+    }
+
+    // Shows an error (red) or info (purple) message on the auth card.
+    function setAuthMessage(msg, type) {
+      const err  = document.getElementById("auth-error");
+      const info = document.getElementById("auth-info");
+      err.style.display  = "none";
+      info.style.display = "none";
+      if (!msg) return;
+      if (type === "info") { info.textContent = msg; info.style.display = "block"; }
+      else                 { err.textContent  = msg; err.style.display  = "block"; }
+    }
+
+    async function handleAuth() {
+      if (!db) { setAuthMessage("Supabase is not configured — see the comments in the source.", "error"); return; }
+      const email    = document.getElementById("auth-email").value.trim();
+      const password = document.getElementById("auth-password").value;
+      const btn      = document.getElementById("auth-btn");
+      if (!email || !password) { setAuthMessage("Please fill in both fields.", "error"); return; }
+
+      btn.disabled = true;
+      btn.textContent = "…";
+      setAuthMessage("", "");
+
+      let error;
+      if (authMode === "signup") {
+        ({ error } = await db.auth.signUp({ email, password }));
+        if (!error) {
+          setAuthMessage("Account created! Check your email to confirm, then sign in.", "info");
+          authMode = "signin";
+          document.getElementById("auth-btn").textContent = "Sign in";
+          btn.disabled = false;
+          return;
+        }
+      } else {
+        ({ error } = await db.auth.signInWithPassword({ email, password }));
+      }
+
+      btn.disabled = false;
+      btn.textContent = authMode === "signin" ? "Sign in" : "Sign up";
+      if (error) { setAuthMessage(error.message, "error"); }
+      // On success, onAuthStateChange fires and calls showApp() + render()
+    }
+
+    async function signOut() {
+      if (db) await db.auth.signOut();
+      currentUser = null;
+      habitsCache = [];
+      document.getElementById("auth-screen").style.display = "flex";
+      document.getElementById("user-badge").style.display  = "none";
+    }
+
+    function showApp(user) {
+      currentUser = user;
+      document.getElementById("auth-screen").style.display = "none";
+      document.getElementById("user-badge").style.display  = "flex";
+      document.getElementById("user-email").textContent    = user.email;
+    }
+
+    // =============================================================
     // THEME TOGGLE — light / dark mode
     // =============================================================
     const THEME_KEY = "habit-tracker-theme";
@@ -1609,13 +1918,47 @@
       if (e.key === "Enter") addHabit();
     });
 
+    // Allow pressing Enter on the auth password field to submit
+    document.getElementById("auth-password").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") handleAuth();
+    });
+
     // =============================================================
     // STARTUP
-    // Run these when the page first loads.
     // =============================================================
-    initTheme();   // apply saved light/dark preference before first paint
-    setDateDisplay();
-    render(); // render() calls renderCalendar() and renderStats() internally
+    async function startup() {
+      initTheme();
+      setDateDisplay();
+
+      if (!db) {
+        // No Supabase configured — run in localStorage-only mode (no login screen)
+        habitsCache = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        render();
+        return;
+      }
+
+      // Subscribe to auth state changes (fires on login, logout, and token refresh)
+      db.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          showApp(session.user);
+          await syncFromSupabase();
+          render();
+        } else {
+          // Not signed in — show the auth screen
+          document.getElementById("auth-screen").style.display = "flex";
+          document.getElementById("user-badge").style.display  = "none";
+        }
+      });
+
+      // Check for an existing session from a previous visit
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) {
+        // No session — show login. onAuthStateChange will handle the rest.
+        document.getElementById("auth-screen").style.display = "flex";
+      }
+    }
+
+    startup();
   </script>
 
 </body>
