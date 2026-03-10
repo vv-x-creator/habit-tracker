@@ -96,10 +96,12 @@
       display: flex;
       gap: 10px;
       margin-bottom: 28px;
+      flex-wrap: wrap;
     }
 
     .add-form input {
       flex: 1; /* take up all available space */
+      min-width: 140px;
       padding: 12px 16px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
@@ -116,6 +118,28 @@
 
     .add-form input:focus {
       border-color: var(--accent);
+    }
+
+    /* Category picker in the add form */
+    .cat-select {
+      padding: 12px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .cat-select:focus {
+      border-color: var(--accent);
+    }
+
+    .cat-select option {
+      background: var(--surface2);
     }
 
     .btn-add {
@@ -145,6 +169,34 @@
       text-transform: uppercase;
       color: var(--text-muted);
       margin-bottom: 12px;
+    }
+
+    /* ============================================================
+       CATEGORY FILTER BAR
+    ============================================================ */
+    .cat-filter-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .cat-filter-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .cat-filter-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--text);
     }
 
     /* ============================================================
@@ -181,6 +233,8 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       transition: border-color 0.2s, background 0.2s;
+      /* Allow the note panel to wrap to its own row */
+      flex-wrap: wrap;
     }
 
     /* When a habit is checked today, highlight the card */
@@ -264,6 +318,75 @@
 
     .streak-badge.active {
       color: #f5a623;
+    }
+
+    /* ---- Category badge on habit card ---- */
+    .cat-badge {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-top: 4px;
+    }
+
+    /* ---- Note button ---- */
+    .btn-note {
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-note:hover {
+      color: var(--accent);
+    }
+
+    .btn-note.has-note {
+      color: var(--accent);
+    }
+
+    /* ---- Note panel (full-width row below the card content) ---- */
+    .note-panel {
+      flex-basis: 100%;
+      display: none;
+      padding-top: 10px;
+    }
+
+    .note-panel.open {
+      display: block;
+    }
+
+    .note-area {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      resize: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+      height: 64px;
+    }
+
+    .note-area:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .note-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
     /* ---- Delete button ---- */
@@ -416,6 +539,81 @@
     .habit-name:has(.name-edit-input) {
       overflow: visible;
       white-space: normal;
+    }
+
+    /* ============================================================
+       7-DAY HEATMAP SECTION
+    ============================================================ */
+    .week-section {
+      margin-bottom: 32px;
+    }
+
+    .week-scroll {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .week-table {
+      border-collapse: separate;
+      border-spacing: 4px;
+      font-size: 0.78rem;
+      width: 100%;
+    }
+
+    .week-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: center;
+      padding: 2px 4px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+    }
+
+    .week-table th.today-col {
+      color: var(--accent);
+    }
+
+    .week-table td.habit-name-col {
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 110px;
+      padding-right: 8px;
+      font-size: 0.8rem;
+    }
+
+    .week-cell {
+      width: 34px;
+      height: 28px;
+      border-radius: 6px;
+      text-align: center;
+      vertical-align: middle;
+      border: 1.5px solid transparent;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .week-cell.done {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .week-cell.missed {
+      background: #2a1a1a;
+      border-color: #4a2222;
+      color: var(--red);
+    }
+
+    .week-cell.no-habit {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .week-cell.is-today {
+      border-color: var(--accent) !important;
+      border-width: 2px;
     }
 
     /* ============================================================
@@ -697,6 +895,14 @@
         maxlength="60"
         autocomplete="off"
       />
+      <!-- Category picker: choose an optional tag for the habit -->
+      <select id="cat-select" class="cat-select" title="Choose a category (optional)">
+        <option value="">No category</option>
+        <option value="health">Health</option>
+        <option value="learning">Learning</option>
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+      </select>
       <button class="btn-add" onclick="addHabit()">Add</button>
     </div>
 
@@ -718,6 +924,10 @@
          HABITS LIST
     ====================================================== -->
     <p class="section-label">Your habits</p>
+
+    <!-- Category filter bar (populated by JS when categories are in use) -->
+    <div class="cat-filter-bar" id="cat-filter-bar"></div>
+
     <div class="habits-list" id="habits-list">
       <!-- Cards are inserted here by JavaScript -->
     </div>
@@ -753,6 +963,17 @@
         </svg>
         Import
       </button>
+    </div>
+
+    <!-- ======================================================
+         7-DAY HEATMAP
+         Shows completion for every habit over the last 7 days.
+    ====================================================== -->
+    <div class="week-section">
+      <p class="section-label">Last 7 Days</p>
+      <div class="week-scroll">
+        <table class="week-table" id="week-table"></table>
+      </div>
     </div>
 
     <!-- ======================================================
@@ -839,11 +1060,24 @@
     //   id:          "abc123",      // unique ID
     //   name:        "Drink water", // display name
     //   createdAt:   "2025-06-01",  // date string (YYYY-MM-DD)
-    //   completions: ["2025-06-01", "2025-06-02"]  // list of done dates
+    //   completions: ["2025-06-01", "2025-06-02"],  // list of done dates
+    //   category:    "health",      // optional category key
+    //   notes:       { "2025-06-01": "Ran 5km today" }  // per-date notes
     // }
     // =============================================================
 
     const STORAGE_KEY = "habit-tracker-v1";
+
+    // =============================================================
+    // CATEGORIES
+    // Each entry: key → { label, color }
+    // =============================================================
+    const CATEGORIES = {
+      health:   { label: "Health",   color: "#3dd68c" },
+      learning: { label: "Learning", color: "#7c6af7" },
+      work:     { label: "Work",     color: "#f5a623" },
+      personal: { label: "Personal", color: "#6ab4f7" },
+    };
 
     // =============================================================
     // CALENDAR STATE
@@ -852,6 +1086,9 @@
     // =============================================================
     let calYear  = new Date().getFullYear();
     let calMonth = new Date().getMonth(); // 0 = January, 11 = December
+
+    // Active category filter: "all" or one of the CATEGORIES keys.
+    let activeCategoryFilter = "all";
 
     // Load habits from localStorage, or start with an empty array.
     function loadHabits() {
@@ -987,18 +1224,25 @@
         return;
       }
 
+      // Read the selected category (empty string = none)
+      const catSelect = document.getElementById("cat-select");
+      const category = catSelect ? catSelect.value : "";
+
       // Build the new habit object
       const newHabit = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         name: name,
         createdAt: todayStr(),
-        completions: []
+        completions: [],
+        category: category,
+        notes: {},
       };
 
       habits.push(newHabit);
       saveHabits(habits);
 
       input.value = "";
+      if (catSelect) catSelect.value = "";
       input.focus();
       render();
       showToast("Habit added!");
@@ -1111,26 +1355,47 @@
       const progressFill = document.getElementById("progress-fill");
       const progressLabel = document.getElementById("progress-label");
 
+      // Always update category filter bar based on all habits
+      renderCatFilter(habits);
+
       // Clear the current list
       list.innerHTML = "";
 
       if (habits.length === 0) {
         empty.style.display = "block";
         progressWrap.style.display = "none";
+        renderWeekly();
+        renderCalendar();
+        renderStats();
         return;
       }
 
       empty.style.display = "none";
+
+      // Apply category filter to determine which habits to show
+      const displayHabits = activeCategoryFilter === "all"
+        ? habits
+        : habits.filter(h => h.category === activeCategoryFilter);
+
+      if (displayHabits.length === 0) {
+        progressWrap.style.display = "none";
+        list.innerHTML = '<p style="color:var(--text-muted);font-size:0.86rem;text-align:center;padding:20px 0">No habits in this category.</p>';
+        renderWeekly();
+        renderCalendar();
+        renderStats();
+        return;
+      }
+
       progressWrap.style.display = "block";
 
-      // Count how many are done today for the progress bar
-      const doneCount = habits.filter(h => h.completions.includes(today)).length;
-      const pct = Math.round((doneCount / habits.length) * 100);
+      // Count how many are done today for the progress bar (uses filtered list)
+      const doneCount = displayHabits.filter(h => h.completions.includes(today)).length;
+      const pct = Math.round((doneCount / displayHabits.length) * 100);
       progressFill.style.width = pct + "%";
-      progressLabel.textContent = `${doneCount} / ${habits.length}`;
+      progressLabel.textContent = `${doneCount} / ${displayHabits.length}`;
 
       // Build a card for each habit
-      habits.forEach(habit => {
+      displayHabits.forEach(habit => {
         const isDone = habit.completions.includes(today);
         const streak = calcStreak(habit.completions);
 
@@ -1145,6 +1410,31 @@
           ? `<span class="streak-badge active"><em class="flame">&#128293;</em> ${streak} day streak</span>`
           : `<span class="streak-badge">No streak yet</span>`;
 
+        // Category badge (only shown if category is set)
+        const cat = habit.category && CATEGORIES[habit.category];
+        const catBadgeHTML = cat
+          ? `<span class="cat-badge" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.label}</span>`
+          : "";
+
+        // Note button + panel (only for habits done today)
+        const todayNote = (habit.notes && habit.notes[today]) || "";
+        const hasNote = todayNote.length > 0;
+
+        const noteBtnHTML = isDone ? `
+          <button class="btn-note${hasNote ? " has-note" : ""}" onclick="toggleNotePanel('${habit.id}')" title="${hasNote ? "View/edit today's note" : "Add a note for today"}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>` : "";
+
+        const notePanelHTML = isDone ? `
+          <div class="note-panel" id="note-panel-${habit.id}">
+            <textarea class="note-area" placeholder="Add a note for today..." maxlength="200"
+              onblur="saveNote('${habit.id}', this.value)">${escapeHTML(todayNote)}</textarea>
+            <p class="note-hint">Auto-saved when you click away</p>
+          </div>` : "";
+
         card.innerHTML = `
           <!-- Circular checkbox — passes itself (this) so the animation can read its position -->
           <button class="habit-check" onclick="toggleHabit('${habit.id}', this)" title="${isDone ? "Unmark" : "Mark as done"}">
@@ -1154,11 +1444,14 @@
             </svg>
           </button>
 
-          <!-- Name and streak: clicking the name starts inline editing -->
+          <!-- Name, streak, and category badge -->
           <div class="habit-info">
             <div class="habit-name" onclick="startEditing('${habit.id}')" title="Click to rename">${escapeHTML(habit.name)}</div>
             ${streakHTML}
+            ${catBadgeHTML}
           </div>
+
+          ${noteBtnHTML}
 
           <!-- Delete button -->
           <button class="btn-delete" onclick="deleteHabit('${habit.id}')" title="Delete habit">
@@ -1171,14 +1464,154 @@
               <path d="M9 6V4h6v2"></path>
             </svg>
           </button>
+
+          ${notePanelHTML}
         `;
 
         list.appendChild(card);
       });
 
-      // Redraw the calendar and stats so they reflect any changes
+      // Redraw the weekly heatmap, calendar and stats so they reflect any changes
+      renderWeekly();
       renderCalendar();
       renderStats();
+    }
+
+    // =============================================================
+    // CATEGORY FILTER — RENDER
+    //
+    // Draws the row of filter buttons above the habits list.
+    // Only shown when at least one habit has a category set.
+    // =============================================================
+    function renderCatFilter(habits) {
+      const bar = document.getElementById("cat-filter-bar");
+      if (!bar) return;
+
+      // Find which categories are actually in use
+      const used = new Set((habits || []).map(h => h.category).filter(Boolean));
+
+      if (used.size === 0) {
+        // No categories in use — hide the bar and reset filter
+        bar.innerHTML = "";
+        activeCategoryFilter = "all";
+        return;
+      }
+
+      let html = `<button class="cat-filter-btn${activeCategoryFilter === "all" ? " active" : ""}" onclick="setCategoryFilter('all')">All</button>`;
+
+      for (const [key, cat] of Object.entries(CATEGORIES)) {
+        if (!used.has(key)) continue;
+        const isActive = activeCategoryFilter === key;
+        const activeStyle = isActive
+          ? `style="border-color:${cat.color};background:${cat.color}22;color:${cat.color}"`
+          : "";
+        html += `<button class="cat-filter-btn${isActive ? " active" : ""}" onclick="setCategoryFilter('${key}')" ${activeStyle}>${cat.label}</button>`;
+      }
+
+      bar.innerHTML = html;
+    }
+
+    // Switch the active category filter and re-render.
+    function setCategoryFilter(cat) {
+      activeCategoryFilter = cat;
+      render();
+    }
+
+    // =============================================================
+    // COMPLETION NOTES
+    //
+    // toggleNotePanel: show/hide the note textarea below a card.
+    // saveNote: persist the note text to localStorage on blur.
+    // =============================================================
+    function toggleNotePanel(id) {
+      const panel = document.getElementById(`note-panel-${id}`);
+      if (!panel) return;
+      panel.classList.toggle("open");
+      if (panel.classList.contains("open")) {
+        const ta = panel.querySelector(".note-area");
+        if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+      }
+    }
+
+    function saveNote(id, text) {
+      const habits = loadHabits();
+      const habit = habits.find(h => h.id === id);
+      if (!habit) return;
+      if (!habit.notes) habit.notes = {};
+      const today = todayStr();
+      const trimmed = text.trim();
+      if (trimmed) {
+        habit.notes[today] = trimmed;
+      } else {
+        delete habit.notes[today];
+      }
+      saveHabits(habits);
+      // Update the note button icon without a full re-render
+      const btn = document.querySelector(`.habit-card[data-id="${id}"] .btn-note`);
+      if (btn) btn.classList.toggle("has-note", trimmed.length > 0);
+    }
+
+    // =============================================================
+    // 7-DAY HEATMAP — RENDER
+    //
+    // Builds a table: rows = habits, columns = last 7 days.
+    // Each cell is green (done), red (missed), or blank (no habit yet).
+    // =============================================================
+    function renderWeekly() {
+      const habits = loadHabits();
+      const table  = document.getElementById("week-table");
+      if (!table) return;
+
+      const today = todayStr();
+
+      // Build the last-7-days array (oldest → newest), using noon to avoid DST glitches
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const y   = d.getFullYear();
+        const m   = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        days.push(`${y}-${m}-${day}`);
+      }
+
+      if (habits.length === 0) {
+        table.innerHTML = `<tr><td colspan="8" style="color:var(--text-muted);font-size:0.82rem;padding:12px 0;text-align:center">Add habits to see your weekly overview.</td></tr>`;
+        return;
+      }
+
+      // --- Header row ---
+      let html = "<thead><tr>";
+      html += `<th style="text-align:left;padding-right:8px;font-size:0.72rem;color:var(--text-muted)">Habit</th>`;
+      days.forEach(dateStr => {
+        // Use noon on the date to avoid timezone-induced day-off errors
+        const d = new Date(dateStr + "T12:00:00");
+        const dayLabel = d.toLocaleDateString(undefined, { weekday: "short" });
+        const dayNum   = d.getDate();
+        const isToday  = dateStr === today;
+        html += `<th class="${isToday ? "today-col" : ""}">${dayLabel}<br/>${dayNum}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+
+      // --- One row per habit ---
+      habits.forEach(habit => {
+        html += `<tr><td class="habit-name-col" title="${escapeHTML(habit.name)}">${escapeHTML(habit.name)}</td>`;
+        days.forEach(dateStr => {
+          const existed = habit.createdAt <= dateStr;
+          const isToday = dateStr === today;
+          if (!existed) {
+            // Habit didn't exist yet on this day
+            html += `<td class="week-cell no-habit${isToday ? " is-today" : ""}"></td>`;
+          } else {
+            const done = habit.completions.includes(dateStr);
+            html += `<td class="week-cell ${done ? "done" : "missed"}${isToday ? " is-today" : ""}" title="${dateStr}">${done ? "✓" : "—"}</td>`;
+          }
+        });
+        html += "</tr>";
+      });
+
+      html += "</tbody>";
+      table.innerHTML = html;
     }
 
     // =============================================================
@@ -1357,6 +1790,9 @@
         const total  = habit.completions.length;
         const rate   = completionRate(habit);
 
+        // Count notes across all time
+        const noteCount = habit.notes ? Object.keys(habit.notes).length : 0;
+
         const card = document.createElement("div");
         card.className = "stat-card";
         card.innerHTML = `
@@ -1377,6 +1813,11 @@
             <span>All-time rate</span>
             <span class="stat-val">${rate}%</span>
           </div>
+          ${noteCount > 0 ? `
+          <div class="stat-row">
+            <span>Notes written</span>
+            <span class="stat-val">&#128221; ${noteCount}</span>
+          </div>` : ""}
         `;
         grid.appendChild(card);
       });
@@ -1430,6 +1871,9 @@
                   typeof h.createdAt !== "string" || !Array.isArray(h.completions)) {
                 throw new Error("Invalid habit shape.");
               }
+              // Back-fill missing fields for older exports
+              if (!h.category) h.category = "";
+              if (!h.notes)    h.notes    = {};
             });
             saveHabits(data);
             render();
@@ -1594,7 +2038,7 @@
     // Run these when the page first loads.
     // =============================================================
     setDateDisplay();
-    render(); // render() calls renderCalendar() and renderStats() internally
+    render(); // render() calls renderWeekly(), renderCalendar() and renderStats() internally
   </script>
 
 </body>
